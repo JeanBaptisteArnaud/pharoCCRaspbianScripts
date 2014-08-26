@@ -1,24 +1,32 @@
 #/bin/sh
 source config.sh
+cd ${PHAROCROSSROOT}
+sshfs ${RASPUSERNAME}@${IPRASPBERRYPI}:/usr ${PHAROCROSSROOT}/usr
 
-#fetch Raspberry Tool
-git clone https://github.com/raspberrypi/tools.git
-cd tools
-git checkout 9c3d7b6ac692498dd36fec2872e0b55f910baac1 .
-cd $PHAROCROSSROOT
+cd ${PHAROCROSSROOT}/pharo-vm/image
+./pharo generator.image eval "${CONFIGNAME} new  
+		generateSources; generate."
 
-#Install asasm
-wget https://ci.inria.fr/pharo-contribution/view/ARM-Tools/job/asasm/lastSuccessfulBuild/artifact/asasm
-sudo mv asasm /usr/bin/asasm
+cd ${PHAROCROSSROOT}/pharo-vm/build
+sh ../scripts/extract-commit-info.sh
 
-#Create Pharo Image
-git clone https://github.com/pharo-project/pharo-vm
-cd pharo-vm/image/
-sh newImage.sh
-cd $PHAROCROSSROOT
-mkdir /usr/lib/
+echo "
+SET(CMAKE_SYSTEM_NAME Linux)
+SET(CMAKE_SYSTEM_VERSION 1)
+set(CMAKE_SYSTEM_PROCESSOR arm)
 
-#Now we will config the raspberry pi
-ssh -l pi ${IPRASPBERRYPI} "${RASPBERRYPISCRIPT}"
+SET(CMAKE_C_COMPILER ${PHAROCROSSROOT}/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-gcc)
+SET(CMAKE_CXX_COMPILER ${PHAROCROSSROOT}/tools/aarm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++)
 
+# where is the target environment - we mounted it using sshfs
+SET(CMAKE_FIND_ROOT_PATH ${PHAROCROSSROOT})
 
+# search for programs in the build host directories
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+# for libraries and headers in the target directories
+SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+" >> toolchainRaspPi.cmake
+
+chroot ${PHAROCROSSROOT} cmake -DCMAKE_TOOLCHAIN_FILE=toolchainRaspPi.cmake .
+chroot ${PHAROCROSSROOT} make
