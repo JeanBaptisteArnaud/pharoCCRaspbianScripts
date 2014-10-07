@@ -1,6 +1,7 @@
 #/bin/sh
-source config.sh
+. ./config.sh
 
+echo "source of the project: ${PHAROCROSSROOT}"
 #fetch Raspberry Tool
 git clone https://github.com/raspberrypi/tools.git
 cd tools
@@ -9,14 +10,16 @@ cd ${PHAROCROSSROOT}
 
 #Install asasm
 wget https://ci.inria.fr/pharo-contribution/view/ARM-Tools/job/asasm/lastSuccessfulBuild/artifact/asasm
-sudo mv asasm /usr/bin/asasm
+mv asasm /usr/bin/asasm
+
 
 #Create Pharo Image
+cd ${PHAROCROSSROOT}
 git clone https://github.com/pharo-project/pharo-vm
-cd pharo-vm/image/
+cd ${PHAROCROSSROOT}/pharo-vm/image/
 sh newImage.sh
 cd ${PHAROCROSSROOT}
-mkdir /usr/lib/
+mkdir ${PHAROCROSSROOT}/mnt_rpi/
 
 #Now we will config the raspberry pi
 ssh -l ${RASPUSERNAME} ${IPRASPBERRYPI} "${RASPBERRYPISCRIPT}"

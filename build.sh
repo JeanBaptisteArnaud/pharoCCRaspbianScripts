@@ -1,7 +1,10 @@
 #/bin/sh
-source config.sh
+. ./config.sh
+
 cd ${PHAROCROSSROOT}
-sshfs ${RASPUSERNAME}@${IPRASPBERRYPI}:/usr ${PHAROCROSSROOT}/usr
+sshfs ${RASPUSERNAME}@${IPRASPBERRYPI}:/ ${PHAROCROSSROOT}/mnt_rpi
+
+rm -rf ${PHAROCROSSROOT}/pharo-vm/build
 
 cd ${PHAROCROSSROOT}/pharo-vm/image
 ./pharo generator.image eval "${CONFIGNAME} new  
@@ -16,10 +19,10 @@ SET(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
 SET(CMAKE_C_COMPILER ${PHAROCROSSROOT}/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-gcc)
-SET(CMAKE_CXX_COMPILER ${PHAROCROSSROOT}/tools/aarm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++)
+SET(CMAKE_CXX_COMPILER ${PHAROCROSSROOT}/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++)
 
 # where is the target environment - we mounted it using sshfs
-SET(CMAKE_FIND_ROOT_PATH ${PHAROCROSSROOT})
+SET(CMAKE_FIND_ROOT_PATH ${PHAROCROSSROOT}/mnt_rpi/)
 
 # search for programs in the build host directories
 SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
@@ -28,5 +31,5 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 " >> toolchainRaspPi.cmake
 
-chroot ${PHAROCROSSROOT} cmake -DCMAKE_TOOLCHAIN_FILE=toolchainRaspPi.cmake .
-chroot ${PHAROCROSSROOT} make
+cmake -DCMAKE_TOOLCHAIN_FILE=toolchainRaspPi.cmake .
+make
